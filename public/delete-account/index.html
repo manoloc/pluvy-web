@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Delete your Pluvy account / Eliminar tu cuenta de Pluvy</title>
+    <meta
+      name="description"
+      content="How to delete your Pluvy account from the app or request deletion by email."
+    />
+    <link rel="canonical" href="https://pluvy.org/delete-account" />
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f5f8f8;
+        color: #14232c;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-width: 320px; }
+      a { color: #146c94; font-weight: 800; }
+      .shell { margin: 0 auto; max-width: 980px; padding: 24px 20px 56px; }
+      header, footer {
+        align-items: center;
+        display: flex;
+        gap: 18px;
+        justify-content: space-between;
+      }
+      .brand { color: #14232c; font-size: 22px; font-weight: 900; text-decoration: none; }
+      nav { display: flex; flex-wrap: wrap; gap: 14px; justify-content: flex-end; }
+      main { padding: 48px 0 28px; }
+      .eyebrow { color: #3f7f59; font-size: 13px; font-weight: 900; margin: 0 0 12px; text-transform: uppercase; }
+      h1 { font-size: clamp(34px, 8vw, 58px); line-height: 1.02; margin: 0; }
+      h2 { color: #14232c; font-size: 24px; line-height: 1.18; margin: 34px 0 10px; }
+      p, li { color: #526575; font-size: 16px; line-height: 1.7; }
+      .card {
+        background: #ffffff;
+        border: 1px solid #d8e3e7;
+        border-radius: 12px;
+        margin-top: 26px;
+        padding: clamp(20px, 4vw, 34px);
+      }
+      .lang-grid { display: grid; gap: 22px; grid-template-columns: 1fr 1fr; }
+      .notice { background: #edf6f4; border-left: 4px solid #3f7f59; padding: 14px 16px; }
+      footer { border-top: 1px solid #d8e3e7; padding-top: 24px; }
+      @media (max-width: 780px) {
+        header, footer { align-items: flex-start; display: block; }
+        nav { justify-content: flex-start; margin-top: 14px; }
+        .lang-grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <a class="brand" href="/">Pluvy</a>
+        <nav aria-label="Main navigation">
+          <a href="/privacy">Privacy</a>
+          <a href="/delete-account">Delete account</a>
+          <a href="/support">Support</a>
+        </nav>
+      </header>
+
+      <main>
+        <p class="eyebrow">Account deletion / Eliminación de cuenta</p>
+        <h1>Delete your Pluvy account / Eliminar tu cuenta de Pluvy</h1>
+
+        <section class="card">
+          <p class="notice">
+            Contact email / Correo configurable:
+            <a href="mailto:support@pluvy.org">support@pluvy.org</a>.
+            Pluvy does not currently claim an automated web form.
+          </p>
+
+          <div class="lang-grid">
+            <div lang="en">
+              <h2>Delete inside the app</h2>
+              <ol>
+                <li>Open the Pluvy app and sign in.</li>
+                <li>Go to <strong>Settings</strong>.</li>
+                <li>Open the <strong>Account</strong> section.</li>
+                <li>Tap <strong>Delete account</strong>.</li>
+                <li>Confirm the deletion prompt.</li>
+              </ol>
+              <p>
+                The current app creates a server-side deletion request from Settings and then attempts to delete the
+                Firebase Authentication account. If Firebase requires recent sign-in, sign in again and retry, or use
+                the email option below.
+              </p>
+
+              <h2>If you cannot access the app</h2>
+              <p>
+                Email <a href="mailto:support@pluvy.org">support@pluvy.org</a> with the subject
+                <strong>Pluvy account deletion request</strong>. Send the request from the email address used with
+                Pluvy when possible. If that is not possible, include enough information for us to verify ownership,
+                such as sign-in provider, approximate account creation date, display name, and saved place names.
+              </p>
+
+              <h2>What is deleted</h2>
+              <p>
+                Pluvy will delete or disconnect your account profile, Firebase Authentication access, private rain
+                records, saved private locations, friend relationships, sharing preferences, account settings, deletion
+                request state, and server-owned derived friend/map documents where technically and legally possible.
+              </p>
+
+              <h2>What may be retained</h2>
+              <p>
+                Pluvy may retain limited records when needed for security, fraud prevention, abuse investigation, legal
+                obligations, accounting, purchase records, tax records, dispute handling, or anonymized/aggregated
+                community statistics that no longer reasonably identify you.
+              </p>
+
+              <h2>Processing time and verification</h2>
+              <p>
+                We aim to process requests within 30 days. We may ask you to verify control of the account email or
+                confirm account details before deletion. Purchase records may also require store or RevenueCat records
+                to remain for accounting and fraud-prevention purposes.
+              </p>
+
+              <h2>Privacy policy</h2>
+              <p>See the <a href="/privacy">Pluvy Privacy Policy</a> for more detail.</p>
+            </div>
+
+            <div lang="es">
+              <h2>Eliminar desde la app</h2>
+              <ol>
+                <li>Abre la app Pluvy e inicia sesión.</li>
+                <li>Ve a <strong>Settings</strong>.</li>
+                <li>Abre la sección <strong>Account</strong>.</li>
+                <li>Toca <strong>Delete account</strong>.</li>
+                <li>Confirma el aviso de eliminación.</li>
+              </ol>
+              <p>
+                La app actual crea una solicitud de eliminación del lado servidor desde Settings y luego intenta borrar
+                la cuenta de Firebase Authentication. Si Firebase exige inicio de sesión reciente, vuelve a iniciar
+                sesión e intenta otra vez, o usa el correo indicado.
+              </p>
+
+              <h2>Si no puedes entrar a la app</h2>
+              <p>
+                Escribe a <a href="mailto:support@pluvy.org">support@pluvy.org</a> con el asunto
+                <strong>Pluvy account deletion request</strong>. Idealmente envía el correo desde la dirección usada en
+                Pluvy. Si no puedes, incluye información para verificar propiedad, como proveedor de inicio de sesión,
+                fecha aproximada de creación, nombre visible y nombres de lugares guardados.
+              </p>
+
+              <h2>Qué se elimina</h2>
+              <p>
+                Pluvy eliminará o desconectará tu perfil, acceso de Firebase Authentication, registros privados de
+                lluvia, ubicaciones privadas guardadas, amistades, preferencias de compartir, ajustes de cuenta, estado
+                de solicitud de eliminación y documentos derivados de amigos/mapas cuando sea técnica y legalmente
+                posible.
+              </p>
+
+              <h2>Qué podría conservarse</h2>
+              <p>
+                Pluvy puede conservar registros limitados por seguridad, prevención de fraude, investigación de abuso,
+                obligaciones legales, contabilidad, compras, impuestos, disputas o estadísticas comunitarias agregadas
+                o anonimizadas que ya no te identifiquen razonablemente.
+              </p>
+
+              <h2>Plazo y verificación</h2>
+              <p>
+                Intentamos procesar solicitudes dentro de 30 días. Podemos pedirte verificar control del correo de la
+                cuenta o confirmar detalles antes de eliminar. Registros de compra pueden mantenerse por contabilidad y
+                prevención de fraude.
+              </p>
+
+              <h2>Política de privacidad</h2>
+              <p>Revisa la <a href="/privacy">Política de privacidad de Pluvy</a> para más detalles.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <strong>Pluvy App</strong>
+        <nav aria-label="Footer navigation">
+          <a href="/privacy">Privacy</a>
+          <a href="/delete-account">Delete account</a>
+          <a href="/support">Support</a>
+        </nav>
+      </footer>
+    </div>
+  </body>
+</html>
