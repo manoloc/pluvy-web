@@ -117,6 +117,26 @@ function HomePage() {
         </div>
       </section>
 
+      <section className="section pricing-section">
+        <div className="section-heading">
+          <p className="eyebrow">Pluvy Plus and Credits</p>
+          <h2>Optional upgrades for deeper rain analysis.</h2>
+        </div>
+        <div className="pricing-grid">
+          <article className="pricing-card pricing-card-featured">
+            <p className="price-label">Pluvy Plus</p>
+            <h3>US$1.99 / month</h3>
+            <p>Or US$14.99 / year. Unlock advanced reports, richer analysis, and historical map tools.</p>
+          </article>
+          <article className="pricing-card">
+            <p className="price-label">Pluvy Credits</p>
+            <h3>5 for US$0.99</h3>
+            <p>Also available: 15 credits for US$2.99 and 40 credits for US$5.99.</p>
+          </article>
+        </div>
+        <p className="pricing-note">Your own rain records and CSV export remain available without Pluvy Plus.</p>
+      </section>
+
       <section className="privacy-band">
         <div>
           <p className="eyebrow">Privacy first</p>

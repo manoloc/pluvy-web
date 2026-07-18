@@ -233,12 +233,58 @@ a {
 
 .feature-card p,
 .privacy-band p,
+.pricing-card p,
+.pricing-note,
 .policy-content p,
 .faq-item p,
 .site-footer p {
   color: #526575;
   line-height: 1.65;
   margin: 0;
+}
+
+.pricing-section {
+  padding-top: 26px;
+}
+
+.pricing-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 32px;
+}
+
+.pricing-card {
+  background: #ffffff;
+  border: 1px solid #d8e3e7;
+  border-radius: 12px;
+  min-height: 210px;
+  padding: 24px;
+}
+
+.pricing-card-featured {
+  background: #eaf7ff;
+  border-color: #b8dbe9;
+}
+
+.price-label {
+  color: #146c94;
+  font-size: 13px;
+  font-weight: 900;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.pricing-card h3 {
+  color: #14232c;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.04;
+  margin: 0 0 14px;
+}
+
+.pricing-note {
+  font-weight: 800;
+  margin-top: 18px;
 }
 
 .privacy-band {
@@ -325,6 +371,10 @@ a {
   }
 
   .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-grid {
     grid-template-columns: 1fr;
   }
 
