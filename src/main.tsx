@@ -4,9 +4,11 @@ import ExcelJS from "exceljs";
 import "./styles.css";
 
 const FUNCTIONS_BASE = "https://us-central1-pluvy-f6741.cloudfunctions.net";
+const APP_STORE_URL = "https://apps.apple.com/us/app/pluvy-app/id6787290424";
 
 const navItems = [
   { href: "/", label: "Home" },
+  { href: "/data", label: "Data" },
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
   { href: "/honor-code", label: "Honor Code" },
@@ -43,13 +45,14 @@ function Header() {
   return (
     <header className="site-header">
       <a className="brand" href="/" aria-label="Pluvy home">
-        <span className="brand-mark" aria-hidden="true" />
+        <img className="brand-logo" src="/pluvy-icon.png" alt="" />
         <span>Pluvy</span>
       </a>
       <nav className="top-nav" aria-label="Main navigation">
+        <a href="/data">Data</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
-        <a href="/support">Support</a>
+        <a className="nav-download" href={APP_STORE_URL} target="_blank" rel="noreferrer">Download</a>
       </nav>
     </header>
   );
@@ -194,37 +197,37 @@ function HomePage() {
     <>
       <section className="hero">
         <div className="hero-copy">
-          <p className="eyebrow">Community rainfall logging</p>
+          <p className="eyebrow">Personal and community rainfall</p>
           <h1>Pluvy</h1>
-          <p className="hero-line">Track real rain with your friends and the world.</p>
+          <p className="hero-line">Your rainfall history, clearly recorded.</p>
           <p className="hero-description">
-            Pluvy lets you record rainfall from your saved places, compare your personal stats, share rain cards,
-            and help build a community-powered rain map.
+            Save measurements from the places you care about, understand long-term patterns, and explore shared rainfall
+            data without exposing exact private locations.
           </p>
-          <div className="store-row" aria-label="App store availability">
-            <span>App Store coming soon</span>
-            <span>More platforms coming soon</span>
+          <div className="hero-actions">
+            <a className="app-store-button" href={APP_STORE_URL} target="_blank" rel="noreferrer">
+              <small>Download on the</small>
+              <strong>App Store</strong>
+            </a>
+            <a className="data-link-button" href="/data">Import or export data</a>
           </div>
+          <p className="hero-platform-note">Available for iPhone and iPad.</p>
         </div>
-        <div className="hero-visual" aria-hidden="true">
-          <div className="rain-card">
-            <span className="rain-card-label">Today at Home</span>
-            <strong>12.4 mm</strong>
-            <small>Shared with friends</small>
-          </div>
-          <div className="map-grid">
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
+        <div className="hero-visual">
+          <img src="/pluvy-record.png" alt="Pluvy rainfall recording screen on iPhone" />
         </div>
+      </section>
+
+      <section className="trust-strip" aria-label="Pluvy highlights">
+        <span><strong>Fast records</strong> Date, place and rainfall</span>
+        <span><strong>Private by design</strong> Exact locations stay private</span>
+        <span><strong>Your data</strong> Import and export anytime</span>
       </section>
 
       <section className="section">
         <div className="section-heading">
           <p className="eyebrow">Built for real records</p>
-          <h2>Simple enough for daily use, structured enough for useful data.</h2>
+          <h2>Built for a daily habit. Ready for years of useful history.</h2>
         </div>
         <div className="feature-grid">
           <Feature title="Saved places" body="Create places such as Home, Farm, Beach House, or Office, then record rain in seconds." />
@@ -232,7 +235,7 @@ function HomePage() {
           <Feature title="Friends" body="Share a friend code and compare rain with people you know, without chat or noisy social feeds." />
           <Feature title="World Map" body="Help build a community-powered map using approximate public locations, never exact private addresses." />
           <Feature title="Share cards" body="Turn your latest record or summary into a clean rain card for sharing." />
-          <Feature title="Own data export" body="Export your own records as CSV. Your data should remain accessible to you." />
+          <Feature title="Your data stays portable" body="Import or export rainfall history securely from your phone or computer." />
         </div>
       </section>
 
