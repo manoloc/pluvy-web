@@ -1,6 +1,9 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+import ExcelJS from "exceljs";
 import "./styles.css";
+
+const FUNCTIONS_BASE = "https://us-central1-pluvy-f6741.cloudfunctions.net";
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -70,6 +73,122 @@ function Footer() {
   );
 }
 
+type DataSession = { token: string; locationName: string; operation: "import" | "export"; expiresAt: string };
+type PreviewRow = { rowNumber: number; status: "valid" | "warning" | "invalid" | "duplicate"; message: string; included: boolean; date?: string; rainfallMm?: number; notes?: string };
+
+function DataPage() {
+  const [language, setLanguage] = React.useState<"en" | "es">(() => navigator.language.toLowerCase().startsWith("es") ? "es" : "en");
+  const [code, setCode] = React.useState("");
+  const [session, setSession] = React.useState<DataSession>();
+  const [rows, setRows] = React.useState<PreviewRow[]>([]);
+  const [rawRows, setRawRows] = React.useState<Record<string, unknown>[]>([]);
+  const [summary, setSummary] = React.useState<{ found: number; valid: number; warnings: number; invalid: number; duplicates: number }>();
+  const [busy, setBusy] = React.useState(false);
+  const [message, setMessage] = React.useState("");
+  const es = language === "es";
+
+  const validateCode = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setBusy(true); setMessage("");
+    try { setSession(await callFunction<DataSession>("validateWebDataSession", { code })); }
+    catch (error) { setMessage(readError(error, es ? "El codigo no es valido o expiro." : "The code is invalid or expired.")); }
+    finally { setBusy(false); }
+  };
+
+  const readFile = async (file?: File) => {
+    if (!file || !session) return;
+    setBusy(true); setMessage(""); setRows([]);
+    try {
+      let data: Record<string, unknown>[];
+      if (file.name.toLowerCase().endsWith(".csv")) {
+        data = parseCsv(await file.text());
+      } else {
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(await file.arrayBuffer());
+        const sheet = workbook.worksheets[0];
+        if (!sheet) throw new Error(es ? "El archivo no tiene una hoja." : "The file has no worksheet.");
+        const headers = (sheet.getRow(1).values as ExcelJS.CellValue[]).slice(1).map((value) => String(value ?? ""));
+        data = [];
+        sheet.eachRow((row, rowNumber) => { if (rowNumber > 1) { const values = (row.values as ExcelJS.CellValue[]).slice(1); if (values.some((value) => value !== null && value !== undefined && value !== "")) data.push(Object.fromEntries(headers.map((header, index) => [header, cellValue(values[index])]))); } });
+      }
+      const normalized = data.map((row, index) => ({ rowNumber: index + 2, date: pickColumn(row, ["date", "fecha"]), rainfall: pickColumn(row, ["rainfall", "rainfall mm", "lluvia", "precipitacion", "precipitación"]), notes: pickColumn(row, ["notes", "note", "notas", "nota"]), included: true }));
+      const result = await callFunction<{ rows: PreviewRow[]; summary: typeof summary }>("previewRainImport", { token: session.token, rows: normalized });
+      setRawRows(normalized); setRows(result.rows); setSummary(result.summary);
+    } catch (error) { setMessage(readError(error, es ? "No pudimos leer o validar el archivo." : "We could not read or validate the file.")); }
+    finally { setBusy(false); }
+  };
+
+  const commit = async () => {
+    if (!session) return;
+    const selected = rawRows.filter((_, index) => rows[index]?.included && ["valid", "warning"].includes(rows[index]?.status));
+    setBusy(true); setMessage("");
+    try {
+      const result = await callFunction<{ imported: number }>("commitRainImport", { token: session.token, rows: selected });
+      setMessage(es ? `${result.imported} registros importados correctamente.` : `${result.imported} records imported successfully.`); setRows([]); setRawRows([]);
+    } catch (error) { setMessage(readError(error, es ? "No se importaron registros." : "No records were imported.")); }
+    finally { setBusy(false); }
+  };
+
+  const exportData = async () => {
+    if (!session) return;
+    setBusy(true); setMessage("");
+    try {
+      const result = await callFunction<{ locationName: string; unit: string; records: { date: string; rainfall: number; notes: string }[] }>("exportRainData", { token: session.token });
+      const workbook = new ExcelJS.Workbook();
+      const recordsSheet = workbook.addWorksheet("Rainfall Records");
+      recordsSheet.columns = [{ header: "Date", key: "date", width: 16 }, { header: `Rainfall (${result.unit})`, key: "rainfall", width: 18 }, { header: "Notes", key: "notes", width: 48 }];
+      result.records.forEach((record) => recordsSheet.addRow(record));
+      recordsSheet.getRow(1).font = { bold: true };
+      downloadWorkbook(await workbook.xlsx.writeBuffer(), `Pluvy-${safeFilename(result.locationName)}.xlsx`);
+    } catch (error) { setMessage(readError(error, es ? "No pudimos exportar los registros." : "We could not export the records.")); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <section className="data-page">
+      <div className="data-language" aria-label="Language"><button className={es ? "" : "active"} onClick={() => setLanguage("en")}>EN</button><button className={es ? "active" : ""} onClick={() => setLanguage("es")}>ES</button></div>
+      <p className="eyebrow">Pluvy Data</p>
+      <h1>{es ? "Importa o exporta tus datos de Pluvy" : "Import or export your Pluvy data"}</h1>
+      {!session ? (
+        <div className="data-panel">
+          <ol className="data-steps">
+            <li>{es ? "Abre Pluvy en tu telefono." : "Open Pluvy on your phone."}</li><li>{es ? "Ve a Ajustes → Importar / Exportar." : "Go to Settings → Import / Export Data."}</li><li>{es ? "Elige una ubicacion y genera un codigo." : "Choose a location and generate a code."}</li><li>{es ? "Ingresa el codigo aqui." : "Enter the code here."}</li>
+          </ol>
+          <form onSubmit={validateCode}><label htmlFor="data-code">{es ? "Codigo de 8 caracteres" : "8-character code"}</label><input id="data-code" inputMode="text" autoCapitalize="characters" autoComplete="one-time-code" maxLength={9} placeholder="ABCD-EFGH" value={code} onChange={(event) => setCode(formatWebCode(event.target.value))} /><button className="data-primary" disabled={busy || normalizeWebCode(code).length !== 8}>{busy ? (es ? "Revisando…" : "Checking…") : (es ? "Continuar" : "Continue")}</button></form>
+        </div>
+      ) : (
+        <div className="data-panel">
+          <div className="data-location"><span>{es ? "Ubicacion seleccionada" : "Selected location"}</span><strong>{session.locationName}</strong></div>
+          {session.operation === "export" ? <><p>{es ? "Descarga un archivo Excel facil de leer con el historial de esta ubicacion." : "Download an easy-to-read Excel file with this location's history."}</p><button className="data-primary" disabled={busy} onClick={exportData}>{es ? "Exportar historial de lluvia" : "Export rainfall history"}</button></> : <>
+            <div className="data-actions"><button onClick={() => downloadTemplate(es)}>{es ? "Descargar plantilla Excel" : "Download Excel Template"}</button><label className="data-file">{es ? "Elegir Excel o CSV" : "Choose Excel or CSV"}<input type="file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => readFile(event.target.files?.[0])} /></label></div>
+            {summary ? <div className="data-summary"><span>{summary.found} {es ? "encontrados" : "found"}</span><span>{summary.valid} {es ? "validos" : "valid"}</span><span>{summary.warnings} {es ? "avisos" : "warnings"}</span><span>{summary.duplicates} {es ? "duplicados" : "duplicates"}</span></div> : null}
+            {rows.length ? <><div className="data-table-wrap"><table><thead><tr><th>{es ? "Incluir" : "Include"}</th><th>{es ? "Fila" : "Row"}</th><th>{es ? "Fecha" : "Date"}</th><th>{es ? "Lluvia" : "Rainfall"}</th><th>{es ? "Resultado" : "Result"}</th></tr></thead><tbody>{rows.map((row, index) => <tr key={row.rowNumber} className={`row-${row.status}`}><td><input type="checkbox" checked={row.included} disabled={["invalid", "duplicate"].includes(row.status)} onChange={(event) => setRows((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, included: event.target.checked } : item))} /></td><td>{row.rowNumber}</td><td>{row.date ?? "—"}</td><td>{row.rainfallMm ?? "—"} mm</td><td>{row.message || (es ? "Listo" : "Ready")}</td></tr>)}</tbody></table></div><button className="data-primary" disabled={busy || !rows.some((row) => row.included && ["valid", "warning"].includes(row.status))} onClick={commit}>{es ? "Confirmar importacion" : "Confirm import"}</button></> : null}
+          </>}
+        </div>
+      )}
+      {message ? <p className="data-message" role="status">{message}</p> : null}
+      <p className="data-privacy">{es ? "El codigo expira en 15 minutos. Esta pagina nunca muestra tu direccion ni tus coordenadas privadas." : "The code expires in 15 minutes. This page never shows your private address or coordinates."}</p>
+    </section>
+  );
+}
+
+async function callFunction<T>(name: string, data: unknown): Promise<T> {
+  const response = await fetch(`${FUNCTIONS_BASE}/${name}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ data }) });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.error) throw new Error(payload.error?.message || "Request failed.");
+  return payload.result as T;
+}
+
+function pickColumn(row: Record<string, unknown>, aliases: string[]) { const entry = Object.entries(row).find(([key]) => aliases.includes(key.trim().toLowerCase())); return entry?.[1]; }
+function normalizeWebCode(value: string) { return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8); }
+function formatWebCode(value: string) { const normalized = normalizeWebCode(value); return normalized.length > 4 ? `${normalized.slice(0, 4)}-${normalized.slice(4)}` : normalized; }
+function parseCsv(text: string) { const firstLine = text.split(/\r?\n/, 1)[0] ?? ""; const delimiter = (firstLine.match(/;/g)?.length ?? 0) > (firstLine.match(/,/g)?.length ?? 0) ? ";" : ","; const parsed: string[][] = []; let row: string[] = []; let value = ""; let quoted = false; for (let index = 0; index < text.length; index += 1) { const char = text[index]; if (char === '"') { if (quoted && text[index + 1] === '"') { value += '"'; index += 1; } else quoted = !quoted; } else if (char === delimiter && !quoted) { row.push(value); value = ""; } else if ((char === "\n" || char === "\r") && !quoted) { if (char === "\r" && text[index + 1] === "\n") index += 1; row.push(value); if (row.some((cell) => cell.trim())) parsed.push(row); row = []; value = ""; } else value += char; } row.push(value); if (row.some((cell) => cell.trim())) parsed.push(row); const headers = parsed.shift()?.map((header) => header.trim()) ?? []; return parsed.map((cells) => Object.fromEntries(headers.map((header, index) => [header, cells[index] ?? ""]))); }
+function cellValue(value: ExcelJS.CellValue | undefined): unknown { if (value instanceof Date) return value; if (value && typeof value === "object" && "result" in value) return value.result; if (value && typeof value === "object" && "text" in value) return value.text; return value ?? ""; }
+function readError(error: unknown, fallback: string) { return error instanceof Error && error.message ? error.message : fallback; }
+function safeFilename(value: string) { return value.replace(/[^a-z0-9_-]+/gi, "-").replace(/^-|-$/g, "") || "Rainfall"; }
+function downloadWorkbook(buffer: ExcelJS.Buffer, filename: string) { const blob = new Blob([buffer as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url); }
+async function downloadTemplate(es: boolean) { const workbook = new ExcelJS.Workbook(); const sheet = workbook.addWorksheet("Template"); sheet.columns = [{ header: "Date", key: "date", width: 18 }, { header: "Rainfall", key: "rainfall", width: 18 }, { header: "Notes", key: "notes", width: 48 }]; sheet.addRow({ date: "2026-01-15", rainfall: 12.5, notes: es ? "Ejemplo opcional" : "Optional example" }); sheet.addRow({ date: "15/02/2026", rainfall: 8, notes: "" }); sheet.addRow([]); sheet.addRow([es ? "Instrucciones" : "Instructions"]); sheet.addRow([es ? "Usa AAAA-MM-DD o DD/MM/AAAA. Lluvia se ingresa en mm. Notas es opcional." : "Use YYYY-MM-DD or DD/MM/YYYY. Enter rainfall in mm. Notes are optional."]); sheet.getRow(1).font = { bold: true }; downloadWorkbook(await workbook.xlsx.writeBuffer(), "Pluvy-rainfall-template.xlsx"); }
+
 function HomePage() {
   return (
     <>
@@ -84,7 +203,7 @@ function HomePage() {
           </p>
           <div className="store-row" aria-label="App store availability">
             <span>App Store coming soon</span>
-            <span>Google Play coming soon</span>
+            <span>More platforms coming soon</span>
           </div>
         </div>
         <div className="hero-visual" aria-hidden="true">
@@ -235,18 +354,28 @@ function HonorCodePage() {
 
 function DeleteAccountPage() {
   return (
-    <PolicyPage title="Delete Account" updated="Account deletion requests">
+    <PolicyPage title="Delete your Pluvy account / Eliminar tu cuenta de Pluvy" updated="Account deletion requests">
       <p>
-        To request deletion of your Pluvy account, email <a href="mailto:support@pluvy.org">support@pluvy.org</a> from
-        the email address connected to your account.
+        You can request deletion inside the app from <strong>Settings</strong>, in the{" "}
+        <strong>Help and account</strong> section, by tapping <strong>Delete account</strong> and confirming the prompt.
       </p>
       <p>
-        In-app account deletion will be added before public release if it is not already available in your app version.
+        The app creates a server-side deletion request and then attempts to delete the Firebase Authentication account.
+        If Firebase requires recent sign-in, sign in again and retry.
+      </p>
+      <p>
+        If you cannot access the app, email <a href="mailto:support@pluvy.org">support@pluvy.org</a> from the email
+        address connected to your account when possible, with the subject <strong>Pluvy account deletion request</strong>.
       </p>
       <p>
         Account deletion removes or disconnects your account profile, saved locations, private rain records, friend
-        connections, and app preferences where technically possible. Some public or community aggregate information may
-        be retained in anonymized aggregate form if it can no longer reasonably identify you.
+        connections, app preferences, and server-owned derived friend/map documents where technically and legally
+        possible. Some security, fraud, accounting, purchase, legal, or anonymized aggregate records may be retained
+        when required or when they can no longer reasonably identify you.
+      </p>
+      <p>
+        Pluvy aims to process deletion requests within 30 days and may ask you to verify control of the account email
+        or confirm account details before deletion. See the <a href="/privacy">Privacy Policy</a> for more detail.
       </p>
     </PolicyPage>
   );
@@ -311,6 +440,8 @@ function getPage(path: string) {
       return <DeleteAccountPage />;
     case "/support":
       return <SupportPage />;
+    case "/data":
+      return <DataPage />;
     default:
       return <HomePage />;
   }
