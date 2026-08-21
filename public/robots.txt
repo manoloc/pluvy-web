@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /app-ads.txt
+Allow: /
+
+Sitemap: https://pluvy.org/sitemap.xml
